@@ -1,0 +1,40 @@
+"""One-time setup workflow: creates the BookWell Demo spreadsheet and seeds a fictional Waitlist."""
+import json, sys
+SHEETS_CRED = {"googleSheetsOAuth2Api": {"id": sys.argv[1], "name": "Google Sheets account"}}
+
+SEED = r"""// Fictional waitlist patients (made-up data only)
+const people = [
+  ['WL-001','Maya Chen','maya.chen@example.com','(555) 010-2001','New patient visit','Morning'],
+  ['WL-002','Daniel Brooks','daniel.brooks@example.com','(555) 010-2002','Follow-up','Afternoon'],
+  ['WL-003','Aisha Rahman','aisha.rahman@example.com','(555) 010-2003','Annual check-up','Morning'],
+  ['WL-004','Tom Novak','tom.novak@example.com','(555) 010-2004','Other','Afternoon'],
+];
+return people.map(([id, name, email, phone, reason, time], i) => ({ json: {
+  waitlistId: id, fullName: name, email, phone, reason, preferredTime: time,
+  addedAt: new Date(Date.now() - (people.length - i) * 86400000).toISOString().slice(0, 10),
+  status: 'Waiting', notifiedAt: '',
+}}));"""
+
+nodes = [
+  {"id": "n1", "name": "Note", "type": "n8n-nodes-base.stickyNote", "typeVersion": 1, "position": [-60, -220],
+   "parameters": {"content": "## One-time setup\nClick **Execute workflow** once. It creates the *BookWell Demo* spreadsheet with **Patients** and **Waitlist** tabs and 4 fictional waitlist people.\nCopy **spreadsheetId** from the last node's output into **Clinic Config** in the other workflows. The Patients header row is written by the first booking.", "width": 1120, "height": 160, "color": 5}},
+  {"id": "s1", "name": "Run Setup", "type": "n8n-nodes-base.manualTrigger", "typeVersion": 1, "position": [0, 0], "parameters": {}},
+  {"id": "s2", "name": "Create Spreadsheet", "type": "n8n-nodes-base.googleSheets", "typeVersion": 4.7, "position": [240, 0],
+   "credentials": SHEETS_CRED,
+   "parameters": {"resource": "spreadsheet", "operation": "create", "title": "BookWell Demo",
+      "sheetsUi": {"sheetValues": [{"title": "Patients"}, {"title": "Waitlist"}]}, "options": {}}},
+  {"id": "s3", "name": "Waitlist Seed Data", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [480, 0],
+   "parameters": {"jsCode": SEED}},
+  {"id": "s4", "name": "Write Waitlist", "type": "n8n-nodes-base.googleSheets", "typeVersion": 4.7, "position": [720, 0],
+   "credentials": SHEETS_CRED,
+   "parameters": {"operation": "append",
+      "documentId": {"__rl": True, "mode": "id", "value": "={{ $('Create Spreadsheet').first().json.spreadsheetId }}"},
+      "sheetName": {"__rl": True, "mode": "name", "value": "Waitlist"},
+      "columns": {"mappingMode": "autoMapInputData", "value": {}, "matchingColumns": [], "schema": []},
+      "options": {}}},
+  {"id": "s5", "name": "Return IDs", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [960, 0],
+   "parameters": {"jsCode": "const s = $('Create Spreadsheet').first().json;\nreturn [{ json: { spreadsheetId: s.spreadsheetId, spreadsheetUrl: s.spreadsheetUrl, waitlistRows: $input.all().length } }];"}},
+]
+conn = {a: {"main": [[{"node": b, "type": "main", "index": 0}]]} for a, b in
+        [("Run Setup","Create Spreadsheet"),("Create Spreadsheet","Waitlist Seed Data"),("Waitlist Seed Data","Write Waitlist"),("Write Waitlist","Return IDs")]}
+json.dump({"name": "BookWell – One-time Sheet Setup", "nodes": nodes, "connections": conn, "settings": {"executionOrder": "v1"}}, sys.stdout, indent=2)

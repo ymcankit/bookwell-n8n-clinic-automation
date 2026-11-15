@@ -1,0 +1,1004 @@
+{
+  "name": "BookWell – Reminders & Waitlist",
+  "nodes": [
+    {
+      "id": "n1",
+      "name": "Note n1",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -60,
+        -40
+      ],
+      "parameters": {
+        "content": "## Hourly scan\nReads the **Patients** sheet once an hour and sorts rows into three jobs: **reminders**, **new cancellations**, **calendar cleanup**.\nState lives in the sheet (*Reminder Sent At*, *Status*), so a rerun never double-sends. Failed sends are retried next hour.",
+        "width": 1180,
+        "height": 160,
+        "color": 5
+      }
+    },
+    {
+      "id": "n2",
+      "name": "Note n2",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1180,
+        -120
+      ],
+      "parameters": {
+        "content": "## 24-hour reminder\nOnly for Tentative/Confirmed bookings with no slot problem.",
+        "width": 1000,
+        "height": 100,
+        "color": 4
+      }
+    },
+    {
+      "id": "n3",
+      "name": "Note n3",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1180,
+        380
+      ],
+      "parameters": {
+        "content": "## Cancellation → waitlist\nStaff type **Cancelled** (or *Canceled*) in Status. The next *Waiting* person (same morning/afternoon first, then longest wait) gets an offer email.\nStatuses are written **only after Gmail confirms the send**.",
+        "width": 1700,
+        "height": 140,
+        "color": 6
+      }
+    },
+    {
+      "id": "n4",
+      "name": "Note n4",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1180,
+        1000
+      ],
+      "parameters": {
+        "content": "## Calendar cleanup\nRenames the event **[CANCELLED]**, greys it out and marks it free. Checks the title first, so it is safe to repeat.",
+        "width": 900,
+        "height": 120,
+        "color": 7
+      }
+    },
+    {
+      "id": "t1",
+      "name": "Every Hour",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        200
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 1
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "t2",
+      "name": "Run Now (test link)",
+      "webhookId": "b00c11a0-7e3d-4a11-9e11-b00c11a0f004",
+      "disabled": true,
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        420
+      ],
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "bookwell-reminders-run",
+        "responseMode": "onReceived",
+        "options": {}
+      }
+    },
+    {
+      "id": "cfg",
+      "name": "Clinic Config",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        220,
+        300
+      ],
+      "parameters": {
+        "mode": "manual",
+        "includeOtherFields": true,
+        "options": {},
+        "assignments": {
+          "assignments": [
+            {
+              "id": "cfg0",
+              "name": "clinicName",
+              "type": "string",
+              "value": "BookWell Family Clinic"
+            },
+            {
+              "id": "cfg1",
+              "name": "clinicTimezone",
+              "type": "string",
+              "value": "America/New_York"
+            },
+            {
+              "id": "cfg2",
+              "name": "spreadsheetId",
+              "type": "string",
+              "value": "PASTE_YOUR_SPREADSHEET_ID"
+            },
+            {
+              "id": "cfg3",
+              "name": "address",
+              "type": "string",
+              "value": "1420 Maple Grove Avenue, Suite 200, Riverton"
+            },
+            {
+              "id": "cfg4",
+              "name": "phone",
+              "type": "string",
+              "value": "(555) 014-2290"
+            },
+            {
+              "id": "cfg5",
+              "name": "hoursText",
+              "type": "string",
+              "value": "Mon–Fri 8:00 AM–6:00 PM, Sat 9:00 AM–1:00 PM, closed Sundays"
+            },
+            {
+              "id": "cfg6",
+              "name": "morningWindow",
+              "type": "string",
+              "value": "8:00 AM – 12:00 PM"
+            },
+            {
+              "id": "cfg7",
+              "name": "afternoonWindow",
+              "type": "string",
+              "value": "1:00 PM – 6:00 PM"
+            },
+            {
+              "id": "cfg8",
+              "name": "lateCancelFee",
+              "type": "string",
+              "value": "$25"
+            },
+            {
+              "id": "cfg9",
+              "name": "visitNotes",
+              "type": "string",
+              "value": "Free parking behind the building. Please bring your insurance card and a photo ID."
+            },
+            {
+              "id": "cfg10",
+              "name": "staffEmail",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "id": "cfg11",
+              "name": "managerEmail",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "id": "cfg12",
+              "name": "faq",
+              "type": "string",
+              "value": "- Address: 1420 Maple Grove Avenue, Suite 200, Riverton. Free parking behind the building; wheelchair accessible.\n- Phone: (555) 014-2290. Email: hello@bookwell.example\n- Hours: Mon–Fri 8:00 AM–6:00 PM, Sat 9:00 AM–1:00 PM, closed Sundays and public holidays.\n- Appointment windows: Morning = 8:00 AM–12:00 PM, Afternoon = 1:00 PM–6:00 PM (Saturday mornings only).\n- Insurance: we accept BrightPath Health, Meridian Care, Unity Shield and Harbor Mutual plans, plus self-pay. Bring your insurance card and a photo ID. Self-pay visits start at $85.\n- New patients: arrive 15 minutes early to complete forms; bring a list of current medications.\n- Cancellation policy: cancel or reschedule at least 24 hours ahead by phone or by replying to your confirmation email. Late cancellations and no-shows may incur a $25 fee.\n- Requests are tentative until a staff member confirms the exact time by email within one business day.\n- Prescription refills and test results are handled by phone, not by email."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "r1",
+      "name": "Read Patients",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "position": [
+        440,
+        300
+      ],
+      "parameters": {
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $('Clinic Config').first().json.spreadsheetId }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Patients"
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "f1",
+      "name": "Find Due Work",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        300
+      ],
+      "parameters": {
+        "jsCode": "// Scan the Patients sheet and decide what needs doing this hour\nconst C = $('Clinic Config').first().json;\nconst ZONE = C.clinicTimezone;\nconst now = DateTime.now().setZone(ZONE);\nconst parseStart = s => {   // accepts \"2026-11-20 09:00\", \"2026-11-20 9:00:00\", \"2026-11-20T09:00:00-05:00\"\n  const str = String(s || '');\n  const iso = DateTime.fromISO(str, { setZone: true });\n  if (iso.isValid && /[T ]\\d/.test(str) && /[+-]\\d\\d:\\d\\d$|Z$/.test(str)) return iso.setZone(ZONE);\n  const m = str.match(/(\\d{4})-(\\d{2})-(\\d{2})[ T](\\d{1,2}):(\\d{2})/);\n  return m ? DateTime.fromObject({ year: +m[1], month: +m[2], day: +m[3], hour: +m[4], minute: +m[5] }, { zone: ZONE }) : null;\n};\nconst isNewCancellation = s => /^\\s*cancel+ed\\s*[.!]?\\s*$/i.test(s);       // \"Cancelled\", \"canceled\", \"CANCELLED.\"\nconst isAnyCancelled = s => /^\\s*cancel+ed\\b/i.test(s);                    // also matches processed \"Cancelled – offered to …\"\nconst unsent = v => !v || String(v).startsWith('FAILED');                  // failed sends are retried next hour\n\nconst out = [];\nfor (const { json: r } of $input.all()) {\n  if (!r['Booking ID']) continue;\n  const status = String(r['Status'] || '');\n  const start = parseStart(r['Appointment Start']);\n  const hoursAway = start ? start.diff(now, 'hours').hours : null;\n  const base = {\n    bookingId: r['Booking ID'], fullName: r['Full Name'], email: r['Email'], reason: r['Reason'],\n    preferredTime: r['Preferred Time'], calendarEventId: r['Calendar Event ID'] || '', slotIssue: r['Slot Issue'] || '',\n    startText: start ? start.toFormat(\"cccc, LLLL d\") + ` (${r['Preferred Time'] || ''} window)` : r['Preferred Date'],\n  };\n  // 1) Reminder: active booking within 24h, no unresolved slot problem, not yet reminded\n  if (/^\\s*(tentative|confirmed)\\s*$/i.test(status) && !r['Slot Issue'] && unsent(r['Reminder Sent At'])\n      && hoursAway !== null && hoursAway > 0 && hoursAway <= 24) {\n    out.push({ json: { kind: 'reminder', ...base, confirmed: /confirmed/i.test(status) } });\n  }\n  // 2) New cancellation typed by staff\n  if (isNewCancellation(status)) out.push({ json: { kind: 'cancellation', ...base, slotInFuture: hoursAway !== null && hoursAway > 0 } });\n  // 3) Calendar cleanup for any cancelled future booking (idempotent: the event title is checked before editing)\n  if (isAnyCancelled(status) && base.calendarEventId && hoursAway !== null && hoursAway > 0) out.push({ json: { kind: 'calendarCleanup', ...base } });\n}\nreturn out;"
+      }
+    },
+    {
+      "id": "i1",
+      "name": "Is Reminder?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        880,
+        300
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "i1c",
+              "leftValue": "={{ $json.kind }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              },
+              "rightValue": "reminder"
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "c1",
+      "name": "Compose Reminder",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1240,
+        40
+      ],
+      "parameters": {
+        "jsCode": "const esc = s => String(s ?? '').replace(/[&<>\"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',\"'\":'&#39;'}[c]));\nconst C = $('Clinic Config').first().json;\nreturn $input.all().map(({ json: b }) => {\n  const first = (b.fullName || '').split(' ')[0] || 'there';\n  const statusLine = b.confirmed ? 'Your appointment is confirmed for:' : 'Your requested appointment is coming up (our team will confirm the exact time if they haven\\'t already):';\n  const html = `<div style=\"font-family:Arial,Helvetica,sans-serif;max-width:560px;margin:auto;color:#1f2933;line-height:1.5\">\n  <h2 style=\"color:#1d6f5f;margin-bottom:4px\">${esc(C.clinicName)}</h2>\n  <p>Hi ${esc(first)},</p><p>${statusLine}</p>\n  <p style=\"font-size:18px;font-weight:600;margin:12px 0\">${esc(b.reason)} · ${esc(b.startText)}</p>\n  <p>${esc(C.address)}<br>${esc(C.visitNotes)}${b.reason === 'New patient visit' ? ' New patients: please arrive 15 minutes early to complete forms.' : ''}</p>\n  <p>Can't make it? Reply to this email or call ${esc(C.phone)} so we can offer the slot to someone on our waitlist.</p>\n  <p style=\"font-size:12px;color:#5b6472\">Booking ID ${esc(b.bookingId)} · For a medical emergency, call 911 or your local emergency number.</p>\n  <p style=\"font-size:11px;color:#9aa3ad\">${esc(C.clinicName)} is a fictional clinic used in a portfolio demo.</p></div>`;\n  return { json: { ...b, emailSubject: `Reminder: your ${C.clinicName} appointment – ${b.startText}`, emailHtml: html } };\n});"
+      }
+    },
+    {
+      "id": "g1",
+      "name": "Send Reminder (Gmail)",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "onError": "continueRegularOutput",
+      "position": [
+        1460,
+        40
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "={{ $json.email }}",
+        "subject": "={{ $json.emailSubject }}",
+        "emailType": "html",
+        "message": "={{ $json.emailHtml }}",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "={{ $('Clinic Config').first().json.clinicName }}"
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "",
+          "name": "Gmail account"
+        }
+      },
+      "webhookId": "94630577-6263-4e84-93b1-24be026b749b"
+    },
+    {
+      "id": "m1",
+      "name": "Reminder Row",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1680,
+        40
+      ],
+      "parameters": {
+        "jsCode": "const composed = $('Compose Reminder').all();\nreturn $input.all().map((item, i) => ({ json: {\n  'Booking ID': composed[i].json.bookingId,\n  'Reminder Sent At': item.json.id ? new Date().toISOString() : 'FAILED: ' + (item.json.error?.message || item.json.error || 'unknown'),\n}}));"
+      }
+    },
+    {
+      "id": "u1",
+      "name": "Mark Reminder Sent",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "position": [
+        1900,
+        40
+      ],
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $('Clinic Config').first().json.spreadsheetId }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Patients"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "Booking ID"
+          ],
+          "schema": []
+        },
+        "options": {
+          "cellFormat": "RAW"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "i3",
+      "name": "New Cancellation?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1000,
+        620
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "i3c",
+              "leftValue": "={{ $json.kind }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              },
+              "rightValue": "cancellation"
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "r2",
+      "name": "Read Waitlist",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "position": [
+        1240,
+        580
+      ],
+      "parameters": {
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $('Clinic Config').first().json.spreadsheetId }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Waitlist"
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "m2",
+      "name": "Match Waitlist",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1460,
+        580
+      ],
+      "parameters": {
+        "jsCode": "// Pair each cancelled slot with the next person waiting (same time of day first, then longest wait)\nconst cancellations = $('New Cancellation?').all(0).map(i => i.json);\nconst waiting = $input.all().map(i => i.json)\n  .filter(w => w.waitlistId && /^\\s*waiting\\s*$/i.test(String(w.status || '')))\n  .sort((a, b) => String(a.addedAt).localeCompare(String(b.addedAt)));\nconst used = new Set();\nreturn cancellations.map(c => {\n  let pick = null;\n  if (c.slotInFuture && !c.slotIssue) {        // never offer a slot that was outside clinic hours\n    const pool = waiting.filter(w => !used.has(w.waitlistId));\n    pick = pool.find(w => w.preferredTime === c.preferredTime) || pool[0] || null;\n    if (pick) used.add(pick.waitlistId);\n  }\n  return { json: { ...c, hasMatch: !!pick,\n    newStatus: !c.slotInFuture ? 'Cancelled – slot already passed' : c.slotIssue ? 'Cancelled – not offered (slot issue)' : pick ? `Cancelled – slot offered to ${pick.waitlistId}` : 'Cancelled – waitlist empty',\n    waitlistId: pick?.waitlistId || '', waitlistName: pick?.fullName || '', waitlistEmail: pick?.email || '' } };\n});"
+      }
+    },
+    {
+      "id": "i2",
+      "name": "Someone Waiting?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1680,
+        580
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "i2c",
+              "leftValue": "={{ $json.hasMatch }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "rightValue": true
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "c2",
+      "name": "Compose Waitlist Offer",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1900,
+        560
+      ],
+      "parameters": {
+        "jsCode": "const esc = s => String(s ?? '').replace(/[&<>\"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',\"'\":'&#39;'}[c]));\nconst C = $('Clinic Config').first().json;\nreturn $input.all().map(({ json: c }) => {\n  const first = (c.waitlistName || '').split(' ')[0] || 'there';\n  const html = `<div style=\"font-family:Arial,Helvetica,sans-serif;max-width:560px;margin:auto;color:#1f2933;line-height:1.5\">\n  <h2 style=\"color:#1d6f5f;margin-bottom:4px\">${esc(C.clinicName)}</h2>\n  <p>Hi ${esc(first)},</p><p>Good news: an appointment opened up and you're next on our waitlist:</p>\n  <p style=\"font-size:18px;font-weight:600;margin:12px 0\">${esc(c.startText)}</p>\n  <p>Want it? <strong>Reply to this email</strong> or call ${esc(C.phone)}. Our front desk will confirm the exact time with you.</p>\n  <p style=\"font-size:12px;color:#5b6472\">Waitlist ref ${esc(c.waitlistId)} · ${esc(C.address)}</p>\n  <p style=\"font-size:11px;color:#9aa3ad\">${esc(C.clinicName)} is a fictional clinic used in a portfolio demo.</p></div>`;\n  return { json: { ...c, emailSubject: `An appointment opened up – ${c.startText}`, emailHtml: html } };\n});"
+      }
+    },
+    {
+      "id": "g2",
+      "name": "Send Waitlist Offer (Gmail)",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "onError": "continueRegularOutput",
+      "position": [
+        2120,
+        560
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "={{ $json.waitlistEmail }}",
+        "subject": "={{ $json.emailSubject }}",
+        "emailType": "html",
+        "message": "={{ $json.emailHtml }}",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "={{ $('Clinic Config').first().json.clinicName }}"
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "",
+          "name": "Gmail account"
+        }
+      },
+      "webhookId": "fa4ac30e-ff33-4532-b851-86e658b2ff89"
+    },
+    {
+      "id": "o1",
+      "name": "Offer Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2340,
+        560
+      ],
+      "parameters": {
+        "jsCode": "// Only record an offer once Gmail confirms it was sent; otherwise the row stays \"Cancelled\" and is retried next hour\nconst composed = $('Compose Waitlist Offer').all();\nreturn $input.all().map((item, i) => {\n  const { emailHtml, emailSubject, ...c } = composed[i].json;\n  return { json: { ...c, offerSent: !!item.json.id, offerError: item.json.id ? '' : (item.json.error?.message || item.json.error || 'unknown') } };\n});"
+      }
+    },
+    {
+      "id": "w1",
+      "name": "Waitlist Row",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2560,
+        560
+      ],
+      "parameters": {
+        "jsCode": "return $input.all().filter(i => i.json.offerSent).map(({ json: c }) => ({ json: {\n  waitlistId: c.waitlistId, status: `Offered ${c.bookingId}`, notifiedAt: new Date().toISOString() } }));"
+      }
+    },
+    {
+      "id": "u3",
+      "name": "Update Waitlist",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "position": [
+        2780,
+        560
+      ],
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $('Clinic Config').first().json.spreadsheetId }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Waitlist"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "waitlistId"
+          ],
+          "schema": []
+        },
+        "options": {
+          "cellFormat": "RAW"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "p1",
+      "name": "Cancelled Patient Row",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2560,
+        760
+      ],
+      "parameters": {
+        "jsCode": "// Fed by two paths: sent offers (only if the email went out) and cancellations with nobody to offer to\nreturn $input.all().filter(i => i.json.offerSent !== false).map(({ json: c }) => ({ json: { 'Booking ID': c.bookingId, 'Status': c.newStatus } }));"
+      }
+    },
+    {
+      "id": "u2",
+      "name": "Update Cancelled Booking",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "position": [
+        2780,
+        760
+      ],
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $('Clinic Config').first().json.spreadsheetId }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Patients"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "Booking ID"
+          ],
+          "schema": []
+        },
+        "options": {
+          "cellFormat": "RAW"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "e1",
+      "name": "Get Calendar Event",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "onError": "continueRegularOutput",
+      "position": [
+        1240,
+        1180
+      ],
+      "parameters": {
+        "operation": "get",
+        "calendar": {
+          "__rl": true,
+          "mode": "list",
+          "value": "primary",
+          "cachedResultName": "Primary calendar"
+        },
+        "eventId": "={{ $json.calendarEventId }}",
+        "options": {}
+      },
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "id": "e2",
+      "name": "Pick Events To Mark",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1460,
+        1180
+      ],
+      "parameters": {
+        "jsCode": "// Keep only events that still exist and aren't already marked cancelled\nconst wanted = $('New Cancellation?').all(1).map(i => i.json);\nconst out = [];\n$input.all().forEach((item, i) => {\n  const ev = item.json, b = wanted[i] || {};\n  if (!ev || ev.error || !ev.id) return;                          // event deleted by hand, or lookup failed\n  if (String(ev.summary || '').startsWith('[CANCELLED')) return;   // already done on an earlier run\n  const rest = String(ev.summary || `${b.reason} – ${b.fullName}`).replace(/^\\[[^\\]]*\\]\\s*/, '');\n  out.push({ json: { calendarEventId: ev.id, newSummary: `[CANCELLED] ${rest}`,\n    newDescription: `CANCELLED ${$now.toFormat('yyyy-MM-dd')}\\n\\n${ev.description || ''}` } });\n});\nreturn out;"
+      }
+    },
+    {
+      "id": "e3",
+      "name": "Mark Event Cancelled",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "position": [
+        1680,
+        1180
+      ],
+      "parameters": {
+        "operation": "update",
+        "calendar": {
+          "__rl": true,
+          "mode": "list",
+          "value": "primary",
+          "cachedResultName": "Primary calendar"
+        },
+        "eventId": "={{ $json.calendarEventId }}",
+        "updateFields": {
+          "summary": "={{ $json.newSummary }}",
+          "description": "={{ $json.newDescription }}",
+          "color": "8",
+          "showMeAs": "transparent"
+        }
+      },
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "",
+          "name": "Google Calendar account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Every Hour": {
+      "main": [
+        [
+          {
+            "node": "Clinic Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run Now (test link)": {
+      "main": [
+        [
+          {
+            "node": "Clinic Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clinic Config": {
+      "main": [
+        [
+          {
+            "node": "Read Patients",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Patients": {
+      "main": [
+        [
+          {
+            "node": "Find Due Work",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Due Work": {
+      "main": [
+        [
+          {
+            "node": "Is Reminder?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Reminder?": {
+      "main": [
+        [
+          {
+            "node": "Compose Reminder",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "New Cancellation?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compose Reminder": {
+      "main": [
+        [
+          {
+            "node": "Send Reminder (Gmail)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Reminder (Gmail)": {
+      "main": [
+        [
+          {
+            "node": "Reminder Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reminder Row": {
+      "main": [
+        [
+          {
+            "node": "Mark Reminder Sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "New Cancellation?": {
+      "main": [
+        [
+          {
+            "node": "Read Waitlist",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get Calendar Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Waitlist": {
+      "main": [
+        [
+          {
+            "node": "Match Waitlist",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Match Waitlist": {
+      "main": [
+        [
+          {
+            "node": "Someone Waiting?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Someone Waiting?": {
+      "main": [
+        [
+          {
+            "node": "Compose Waitlist Offer",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Cancelled Patient Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compose Waitlist Offer": {
+      "main": [
+        [
+          {
+            "node": "Send Waitlist Offer (Gmail)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Waitlist Offer (Gmail)": {
+      "main": [
+        [
+          {
+            "node": "Offer Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Offer Result": {
+      "main": [
+        [
+          {
+            "node": "Waitlist Row",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Cancelled Patient Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Waitlist Row": {
+      "main": [
+        [
+          {
+            "node": "Update Waitlist",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cancelled Patient Row": {
+      "main": [
+        [
+          {
+            "node": "Update Cancelled Booking",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Calendar Event": {
+      "main": [
+        [
+          {
+            "node": "Pick Events To Mark",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pick Events To Mark": {
+      "main": [
+        [
+          {
+            "node": "Mark Event Cancelled",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "saveDataSuccessExecution": "all",
+    "timezone": "America/New_York",
+    "executionOrder": "v1",
+    "saveManualExecutions": true
+  }
+}

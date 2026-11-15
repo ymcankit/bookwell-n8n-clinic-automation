@@ -1,0 +1,388 @@
+{
+  "name": "BookWell – Weekly Manager Summary",
+  "nodes": [
+    {
+      "id": "n1",
+      "name": "Note n1",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -60,
+        -60
+      ],
+      "parameters": {
+        "content": "## Weekly practice-manager summary\nMondays 8 AM clinic time. Reads both sheets and emails KPI tiles, a visit-type breakdown, the next 7 days and open follow-ups.\nRecipient: **Clinic Config → managerEmail** (blank = the signed-in Gmail inbox).",
+        "width": 1400,
+        "height": 140,
+        "color": 5
+      }
+    },
+    {
+      "id": "t1",
+      "name": "Every Monday 8 AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        200
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "weeksInterval": 1,
+              "triggerAtDay": [
+                1
+              ],
+              "triggerAtHour": 8,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "t2",
+      "name": "Run Now (test link)",
+      "webhookId": "b00c11a0-5a11-4a11-9e11-b00c11a0f005",
+      "disabled": true,
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        420
+      ],
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "bookwell-weekly-summary-run",
+        "responseMode": "onReceived",
+        "options": {}
+      }
+    },
+    {
+      "id": "cfg",
+      "name": "Clinic Config",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        220,
+        300
+      ],
+      "parameters": {
+        "mode": "manual",
+        "includeOtherFields": true,
+        "options": {},
+        "assignments": {
+          "assignments": [
+            {
+              "id": "cfg0",
+              "name": "clinicName",
+              "type": "string",
+              "value": "BookWell Family Clinic"
+            },
+            {
+              "id": "cfg1",
+              "name": "clinicTimezone",
+              "type": "string",
+              "value": "America/New_York"
+            },
+            {
+              "id": "cfg2",
+              "name": "spreadsheetId",
+              "type": "string",
+              "value": "PASTE_YOUR_SPREADSHEET_ID"
+            },
+            {
+              "id": "cfg3",
+              "name": "address",
+              "type": "string",
+              "value": "1420 Maple Grove Avenue, Suite 200, Riverton"
+            },
+            {
+              "id": "cfg4",
+              "name": "phone",
+              "type": "string",
+              "value": "(555) 014-2290"
+            },
+            {
+              "id": "cfg5",
+              "name": "hoursText",
+              "type": "string",
+              "value": "Mon–Fri 8:00 AM–6:00 PM, Sat 9:00 AM–1:00 PM, closed Sundays"
+            },
+            {
+              "id": "cfg6",
+              "name": "morningWindow",
+              "type": "string",
+              "value": "8:00 AM – 12:00 PM"
+            },
+            {
+              "id": "cfg7",
+              "name": "afternoonWindow",
+              "type": "string",
+              "value": "1:00 PM – 6:00 PM"
+            },
+            {
+              "id": "cfg8",
+              "name": "lateCancelFee",
+              "type": "string",
+              "value": "$25"
+            },
+            {
+              "id": "cfg9",
+              "name": "visitNotes",
+              "type": "string",
+              "value": "Free parking behind the building. Please bring your insurance card and a photo ID."
+            },
+            {
+              "id": "cfg10",
+              "name": "staffEmail",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "id": "cfg11",
+              "name": "managerEmail",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "id": "cfg12",
+              "name": "faq",
+              "type": "string",
+              "value": "- Address: 1420 Maple Grove Avenue, Suite 200, Riverton. Free parking behind the building; wheelchair accessible.\n- Phone: (555) 014-2290. Email: hello@bookwell.example\n- Hours: Mon–Fri 8:00 AM–6:00 PM, Sat 9:00 AM–1:00 PM, closed Sundays and public holidays.\n- Appointment windows: Morning = 8:00 AM–12:00 PM, Afternoon = 1:00 PM–6:00 PM (Saturday mornings only).\n- Insurance: we accept BrightPath Health, Meridian Care, Unity Shield and Harbor Mutual plans, plus self-pay. Bring your insurance card and a photo ID. Self-pay visits start at $85.\n- New patients: arrive 15 minutes early to complete forms; bring a list of current medications.\n- Cancellation policy: cancel or reschedule at least 24 hours ahead by phone or by replying to your confirmation email. Late cancellations and no-shows may incur a $25 fee.\n- Requests are tentative until a staff member confirms the exact time by email within one business day.\n- Prescription refills and test results are handled by phone, not by email."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "r1",
+      "name": "Read Patients",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "position": [
+        440,
+        300
+      ],
+      "parameters": {
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $('Clinic Config').first().json.spreadsheetId }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Patients"
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "r2",
+      "name": "Read Waitlist",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "position": [
+        660,
+        300
+      ],
+      "parameters": {
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $('Clinic Config').first().json.spreadsheetId }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Waitlist"
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "h1",
+      "name": "Get Manager Inbox Address",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "position": [
+        880,
+        300
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://gmail.googleapis.com/gmail/v1/users/me/profile",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "options": {}
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "id": "c1",
+      "name": "Build Weekly Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        300
+      ],
+      "parameters": {
+        "jsCode": "// Build the weekly practice-manager summary from the Patients + Waitlist sheets\nconst C = $('Clinic Config').first().json;\nconst ZONE = C.clinicTimezone;\nconst now = DateTime.now().setZone(ZONE);\nconst weekAgo = now.minus({ days: 7 });\nconst weekAhead = now.plus({ days: 7 });\nconst esc = s => String(s ?? '').replace(/[&<>\"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',\"'\":'&#39;'}[c]));\nconst parseStart = s => {\n  const m = String(s || '').match(/(\\d{4})-(\\d{2})-(\\d{2})[ T](\\d{1,2}):(\\d{2})/);\n  return m ? DateTime.fromObject({ year: +m[1], month: +m[2], day: +m[3], hour: +m[4], minute: +m[5] }, { zone: ZONE }) : null;\n};\n\nconst patients = $('Read Patients').all().map(i => i.json).filter(r => r['Booking ID']);\nconst waitlist = $('Read Waitlist').all().map(i => i.json).filter(r => r.waitlistId);\nconst managerEmail = C.managerEmail || $('Get Manager Inbox Address').first().json.emailAddress;\n\nconst isCancelled = r => String(r['Status']).toLowerCase().startsWith('cancelled');\nconst thisWeek = patients.filter(r => { const t = DateTime.fromISO(String(r['Submitted At'])); return t.isValid && t >= weekAgo; });\nconst count = (rows, key) => rows.reduce((m, r) => (m[r[key] || '—'] = (m[r[key] || '—'] || 0) + 1, m), {});\n\nconst kpi = {\n  requests: thisWeek.length,\n  questions: thisWeek.filter(r => r['Question']).length,\n  escalated: thisWeek.filter(r => r['Needs Staff'] === 'YES').length,\n  symptom: thisWeek.filter(r => ['health', 'urgent', 'symptom', 'keyword-review'].includes(r['AI Category'])).length,\n  slotIssues: thisWeek.filter(r => r['Slot Issue']).length,\n  confFailed: thisWeek.filter(r => String(r['Confirmation Sent At']).startsWith('FAILED')).length,\n  cancelled: thisWeek.filter(isCancelled).length,\n  remindersSent: patients.filter(r => { const t = DateTime.fromISO(String(r['Reminder Sent At'])); return t.isValid && t >= weekAgo; }).length,\n  waiting: waitlist.filter(w => String(w.status).toLowerCase() === 'waiting').length,\n  offered: waitlist.filter(w => { const t = DateTime.fromISO(String(w.notifiedAt)); return t.isValid && t >= weekAgo; }).length,\n};\n\nconst upcoming = patients\n  .map(r => ({ r, start: parseStart(r['Appointment Start']) }))\n  .filter(x => x.start && x.start >= now && x.start <= weekAhead && !isCancelled(x.r))\n  .sort((a, b) => a.start - b.start);\nconst openFollowUps = patients.filter(r => r['Needs Staff'] === 'YES' && !isCancelled(r) && (parseStart(r['Appointment Start']) || now) >= now.startOf('day'));\n\n// ---- HTML (table-based so it renders in every mail client) ----\nconst tile = (label, value, warn) => `<td style=\"padding:6px\"><div style=\"border:1px solid #e3e7ec;border-radius:8px;padding:12px 14px;min-width:110px\">\n  <div style=\"font-size:12px;color:#5b6472\">${label}</div><div style=\"font-size:24px;font-weight:700;color:${warn && value ? '#b42318' : '#1f2933'}\">${value}</div></div></td>`;\nconst breakdown = obj => Object.entries(obj).sort((a, b) => b[1] - a[1]).map(([k, v]) => `${esc(k)}: <b>${v}</b>`).join(' · ') || '—';\nconst th = s => `<th style=\"text-align:left;padding:6px 10px;border-bottom:2px solid #e3e7ec;font-size:12px;color:#5b6472\">${s}</th>`;\nconst td = s => `<td style=\"padding:6px 10px;border-bottom:1px solid #f0f2f5;font-size:13px\">${s}</td>`;\n\nconst upcomingRows = upcoming.map(({ r, start }) => `<tr>${td(esc(start.toFormat('ccc d LLL, h:mm a')))}${td(esc(r['Full Name']))}${td(esc(r['Reason']))}${td(esc(r['Status']))}${td(r['Needs Staff'] === 'YES' ? '⚠️' : '')}</tr>`).join('');\nconst followRows = openFollowUps.map(r => `<tr>${td(esc(r['Booking ID']))}${td(esc(r['Full Name']))}${td(esc([r['AI Category'] !== 'faq' && r['AI Category'] !== 'none' ? r['AI Category'] : '', r['Slot Issue']].filter(Boolean).join('; ') || 'flagged'))}</tr>`).join('');\n\nconst range = `${weekAgo.toFormat('LLL d')} – ${now.toFormat('LLL d, yyyy')}`;\nconst html = `<div style=\"font-family:Arial,Helvetica,sans-serif;max-width:640px;margin:auto;color:#1f2933;line-height:1.45\">\n  <h2 style=\"color:#1d6f5f;margin-bottom:0\">${esc(C.clinicName)} · weekly summary</h2>\n  <p style=\"margin-top:4px;color:#5b6472\">${range} · generated ${now.toFormat(\"ccc d LLL, h:mm a\")} clinic time</p>\n  <table><tr>${tile('New requests', kpi.requests)}${tile('Needs follow-up', kpi.escalated, true)}${tile('Cancelled (this week\\'s requests)', kpi.cancelled)}${tile('On waitlist', kpi.waiting)}</tr>\n         <tr>${tile('Questions asked', kpi.questions)}${tile('Health-related', kpi.symptom, true)}${tile('Reminders sent', kpi.remindersSent)}${tile('Waitlist offers', kpi.offered)}</tr></table>\n  <p><b>By visit type:</b> ${breakdown(count(thisWeek, 'Reason'))}<br><b>By time window:</b> ${breakdown(count(thisWeek, 'Preferred Time'))}</p>\n  ${kpi.slotIssues || kpi.confFailed ? `<p style=\"background:#fff4d6;border-left:4px solid #e0a800;padding:8px 12px\">${kpi.slotIssues} request(s) outside clinic hours · ${kpi.confFailed} confirmation email(s) failed</p>` : ''}\n  <h3 style=\"margin:22px 0 6px\">Next 7 days (${upcoming.length})</h3>\n  ${upcoming.length ? `<table style=\"border-collapse:collapse;width:100%\"><tr>${th('When')}${th('Patient')}${th('Visit')}${th('Status')}${th('')}</tr>${upcomingRows}</table>` : '<p style=\"color:#5b6472\">No appointments in the next 7 days.</p>'}\n  <h3 style=\"margin:22px 0 6px\">Open follow-ups (${openFollowUps.length})</h3>\n  ${openFollowUps.length ? `<table style=\"border-collapse:collapse;width:100%\"><tr>${th('Booking')}${th('Patient')}${th('Why')}</tr>${followRows}</table>` : '<p style=\"color:#5b6472\">Nothing waiting on staff. 🎉</p>'}\n  <p style=\"margin-top:22px\"><a href=\"https://docs.google.com/spreadsheets/d/${esc(C.spreadsheetId)}/edit\">Open the Patients sheet</a></p>\n  <p style=\"font-size:11px;color:#9aa3ad\">BookWell is a fictional clinic used in a portfolio demo. All data is made up.</p></div>`;\n\nreturn [{ json: { managerEmail, subject: `${C.clinicName} weekly summary – ${range}`, html, kpi } }];"
+      }
+    },
+    {
+      "id": "g1",
+      "name": "Email Practice Manager (Gmail)",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "position": [
+        1320,
+        300
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "={{ $json.managerEmail }}",
+        "subject": "={{ $json.subject }}",
+        "emailType": "html",
+        "message": "={{ $json.html }}",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "={{ $('Clinic Config').first().json.clinicName + ' – Reports' }}"
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "",
+          "name": "Gmail account"
+        }
+      },
+      "webhookId": "6a46eaa9-85ce-4eb8-9559-d4b46c2657e9"
+    }
+  ],
+  "connections": {
+    "Every Monday 8 AM": {
+      "main": [
+        [
+          {
+            "node": "Clinic Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run Now (test link)": {
+      "main": [
+        [
+          {
+            "node": "Clinic Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clinic Config": {
+      "main": [
+        [
+          {
+            "node": "Read Patients",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Patients": {
+      "main": [
+        [
+          {
+            "node": "Read Waitlist",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Waitlist": {
+      "main": [
+        [
+          {
+            "node": "Get Manager Inbox Address",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Manager Inbox Address": {
+      "main": [
+        [
+          {
+            "node": "Build Weekly Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Weekly Summary": {
+      "main": [
+        [
+          {
+            "node": "Email Practice Manager (Gmail)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "saveDataSuccessExecution": "all",
+    "timezone": "America/New_York",
+    "executionOrder": "v1",
+    "saveManualExecutions": true
+  }
+}

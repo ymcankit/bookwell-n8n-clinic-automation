@@ -1,0 +1,7 @@
+waitlistId,fullName,email,phone,reason,preferredTime,addedAt,status,notifiedAt
+WL-001,Maya Chen,maya.chen@example.com,(555) 010-2001,New patient visit,Morning,2026-11-02,Offered BW-20261111-E2MK,2026-11-12T16:00:41.000Z
+WL-002,Daniel Brooks,daniel.brooks@example.com,(555) 010-2002,Follow-up,Afternoon,2026-11-03,Offered BW-20261109-T4WB,2026-11-10T15:00:38.000Z
+WL-003,Aisha Rahman,aisha.rahman@example.com,(555) 010-2003,Annual check-up,Morning,2026-11-05,Waiting,
+WL-004,Tom Novak,tom.novak@example.com,(555) 010-2004,Other,Afternoon,2026-11-06,Waiting,
+WL-005,Priya Shah,priya.shah@example.com,(555) 010-2005,New patient visit,Morning,2026-11-09,Waiting,
+WL-006,Ben Carter,ben.carter@example.com,(555) 010-2006,Follow-up,Afternoon,2026-11-12,Waiting,

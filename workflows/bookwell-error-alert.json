@@ -1,0 +1,252 @@
+{
+  "name": "BookWell – Error Alert",
+  "nodes": [
+    {
+      "id": "s1",
+      "name": "Note s1",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -40,
+        -160
+      ],
+      "parameters": {
+        "content": "## Error alert\nEvery BookWell workflow points here (Workflow settings → Error workflow).\nIf any step fails after retries, staff get an email with a link to the failed run (which holds the submitted details).\nLimitation: it uses the same Gmail account, so a Gmail outage can't alert itself. Add Slack/SMTP as a second channel in production.",
+        "width": 820,
+        "height": 140,
+        "color": 3
+      }
+    },
+    {
+      "id": "t",
+      "name": "On Workflow Error",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        60
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "cfg",
+      "name": "Clinic Config",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        220,
+        60
+      ],
+      "parameters": {
+        "mode": "manual",
+        "includeOtherFields": true,
+        "options": {},
+        "assignments": {
+          "assignments": [
+            {
+              "id": "cfg0",
+              "name": "clinicName",
+              "type": "string",
+              "value": "BookWell Family Clinic"
+            },
+            {
+              "id": "cfg1",
+              "name": "clinicTimezone",
+              "type": "string",
+              "value": "America/New_York"
+            },
+            {
+              "id": "cfg2",
+              "name": "spreadsheetId",
+              "type": "string",
+              "value": "PASTE_YOUR_SPREADSHEET_ID"
+            },
+            {
+              "id": "cfg3",
+              "name": "address",
+              "type": "string",
+              "value": "1420 Maple Grove Avenue, Suite 200, Riverton"
+            },
+            {
+              "id": "cfg4",
+              "name": "phone",
+              "type": "string",
+              "value": "(555) 014-2290"
+            },
+            {
+              "id": "cfg5",
+              "name": "hoursText",
+              "type": "string",
+              "value": "Mon–Fri 8:00 AM–6:00 PM, Sat 9:00 AM–1:00 PM, closed Sundays"
+            },
+            {
+              "id": "cfg6",
+              "name": "morningWindow",
+              "type": "string",
+              "value": "8:00 AM – 12:00 PM"
+            },
+            {
+              "id": "cfg7",
+              "name": "afternoonWindow",
+              "type": "string",
+              "value": "1:00 PM – 6:00 PM"
+            },
+            {
+              "id": "cfg8",
+              "name": "lateCancelFee",
+              "type": "string",
+              "value": "$25"
+            },
+            {
+              "id": "cfg9",
+              "name": "visitNotes",
+              "type": "string",
+              "value": "Free parking behind the building. Please bring your insurance card and a photo ID."
+            },
+            {
+              "id": "cfg10",
+              "name": "staffEmail",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "id": "cfg11",
+              "name": "managerEmail",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "id": "cfg12",
+              "name": "faq",
+              "type": "string",
+              "value": "- Address: 1420 Maple Grove Avenue, Suite 200, Riverton. Free parking behind the building; wheelchair accessible.\n- Phone: (555) 014-2290. Email: hello@bookwell.example\n- Hours: Mon–Fri 8:00 AM–6:00 PM, Sat 9:00 AM–1:00 PM, closed Sundays and public holidays.\n- Appointment windows: Morning = 8:00 AM–12:00 PM, Afternoon = 1:00 PM–6:00 PM (Saturday mornings only).\n- Insurance: we accept BrightPath Health, Meridian Care, Unity Shield and Harbor Mutual plans, plus self-pay. Bring your insurance card and a photo ID. Self-pay visits start at $85.\n- New patients: arrive 15 minutes early to complete forms; bring a list of current medications.\n- Cancellation policy: cancel or reschedule at least 24 hours ahead by phone or by replying to your confirmation email. Late cancellations and no-shows may incur a $25 fee.\n- Requests are tentative until a staff member confirms the exact time by email within one business day.\n- Prescription refills and test results are handled by phone, not by email."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "h",
+      "name": "Get Clinic Inbox Address",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "position": [
+        440,
+        60
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://gmail.googleapis.com/gmail/v1/users/me/profile",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "options": {}
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "id": "c",
+      "name": "Compose Error Alert",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        60
+      ],
+      "parameters": {
+        "jsCode": "const esc = s => String(s ?? '').replace(/[&<>\"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',\"'\":'&#39;'}[c]));\nconst e = $('On Workflow Error').first().json;\nconst C = $('Clinic Config').first().json;\nconst to = C.staffEmail || $json.emailAddress;\nconst wf = e.workflow || {}, ex = e.execution || {};\nconst link = ex.url || (ex.id ? `http://localhost:5678/workflow/${wf.id}/executions/${ex.id}` : '');\nconst html = `<div style=\"font-family:Arial,sans-serif;max-width:560px\">\n  <h3 style=\"color:#b42318\">🔴 A BookWell automation failed</h3>\n  <p><b>Workflow:</b> ${esc(wf.name)}<br><b>Failed at node:</b> ${esc(ex.lastNodeExecuted || 'unknown')}<br>\n  <b>Error:</b> ${esc(ex.error?.message || e.trigger?.error?.message || 'unknown error')}</p>\n  ${link ? `<p><a href=\"${esc(link)}\">Open the failed run in n8n</a> — the input data (e.g. the patient's submitted details) is in the run. Please follow up manually.</p>` : ''}\n  <p style=\"font-size:11px;color:#888\">BookWell demo – fictional data.</p></div>`;\nreturn [{ json: { to, subject: `[BookWell ERROR] ${wf.name || 'workflow'} failed`, html } }];"
+      }
+    },
+    {
+      "id": "g",
+      "name": "Email Staff (Gmail)",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "position": [
+        880,
+        60
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "={{ $json.to }}",
+        "subject": "={{ $json.subject }}",
+        "emailType": "html",
+        "message": "={{ $json.html }}",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "={{ $('Clinic Config').first().json.clinicName + ' – Alerts' }}"
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "",
+          "name": "Gmail account"
+        }
+      },
+      "webhookId": "aeb862ea-dc4f-47de-a412-ea1647c5fd6c"
+    }
+  ],
+  "connections": {
+    "On Workflow Error": {
+      "main": [
+        [
+          {
+            "node": "Clinic Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clinic Config": {
+      "main": [
+        [
+          {
+            "node": "Get Clinic Inbox Address",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Clinic Inbox Address": {
+      "main": [
+        [
+          {
+            "node": "Compose Error Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compose Error Alert": {
+      "main": [
+        [
+          {
+            "node": "Email Staff (Gmail)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "saveManualExecutions": true,
+    "saveDataSuccessExecution": "all",
+    "timezone": "America/New_York",
+    "executionOrder": "v1"
+  }
+}
